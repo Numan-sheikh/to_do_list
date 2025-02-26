@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/task_form.dart';
+import '../widgets/task_form/task_form.dart';
 import '../widgets/task_tile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -56,7 +56,6 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           child: TaskForm(
             titleController: _titleController,
-            descriptionController: _descriptionController,
             onSave: _addTask,
           ),
         );

@@ -1,77 +1,39 @@
 import 'package:flutter/material.dart';
-import 'subtask_list.dart';
-import 'category_selector.dart';
-import 'task_buttons.dart';
+import 'category_button/category_button.dart';
+import 'calendar_button/calendar_button.dart';
+import 'subtask_button/subtask_button.dart';
+import 'submit_button/submit_button.dart';
 
-class TaskForm extends StatefulWidget {
-  final TextEditingController titleController;
-  final VoidCallback onSave;
-
-  const TaskForm({super.key, required this.titleController, required this.onSave});
-
-  @override
-  TaskFormState createState() => TaskFormState();
-}
-
-class TaskFormState extends State<TaskForm> {
-  final TextEditingController _subTaskController = TextEditingController();
-  final List<String> _subTasks = [];
-  bool _showSubTaskField = false;
-  Map<String, dynamic>? selectedCategory;
-
-  void _addSubTask() {
-    if (_subTaskController.text.isNotEmpty) {
-      setState(() {
-        _subTasks.add(_subTaskController.text);
-        _subTaskController.clear();
-      });
-    }
-  }
-
-  void _selectCategory() async {
-    final selected = await showCategorySelector(context);
-    if (selected != null) {
-      setState(() => selectedCategory = selected);
-    }
-  }
+class TaskForm extends StatelessWidget {
+  const TaskForm({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // Ensures the bottom sheet is not fullscreen
         children: [
+          const Text(
+            "Add Task",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
           TextField(
-            controller: widget.titleController,
-            decoration: const InputDecoration(
-              labelText: "New Task",
+            decoration: InputDecoration(
+              labelText: "Task Name",
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 10),
-          if (_showSubTaskField)
-            TextField(
-              controller: _subTaskController,
-              decoration: InputDecoration(
-                labelText: "Add a Subtask",
-                border: OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addSubTask,
-                ),
-              ),
-            ),
-          const SizedBox(height: 10),
-          SubtaskList(subTasks: _subTasks, onRemove: (task) {
-            setState(() => _subTasks.remove(task));
-          }),
-          TaskButtons(
-            onSave: widget.onSave,
-            onCategorySelect: _selectCategory,
-            onToggleSubTask: () {
-              setState(() => _showSubTaskField = !_showSubTaskField);
-            },
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CategoryButton(),
+              CalendarButton(),
+              SubtaskButton(),
+              SubmitButton(),
+            ],
           ),
         ],
       ),

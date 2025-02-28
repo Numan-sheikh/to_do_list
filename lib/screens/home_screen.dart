@@ -5,18 +5,26 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   void _showTaskForm(BuildContext context) {
+    String selectedCategory = "None";
+    String selectedDate = "No Date"; // Default value if no date is picked
+    List<String> subtasks = [];
+
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Makes the bottom sheet cover most of the screen
-      shape: RoundedRectangleBorder(
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: TaskForm(),
+          child: TaskForm(
+            selectedCategory: selectedCategory,
+            selectedDate: selectedDate,
+            subtasks: subtasks,
+          ),
         );
       },
     );

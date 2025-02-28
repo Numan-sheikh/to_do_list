@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
-import 'category_button/category_button.dart';
-import 'calendar_button/calendar_button.dart';
-import 'subtask_button/subtask_button.dart';
+
 import 'submit_button/submit_button.dart';
 
-class TaskForm extends StatefulWidget {
-  const TaskForm({super.key});
-
-  @override
-  State<TaskForm> createState() => _TaskFormState();
-}
-
-class _TaskFormState extends State<TaskForm> {
+class TaskForm extends StatelessWidget {
   final TextEditingController taskController = TextEditingController();
-  
-  // Variables to hold selected values
-  String selectedCategory = "None";
-  String selectedDate = "No Date Selected";
-  List<String> subtasks = [];
+  final String selectedCategory;
+  final String selectedDate;
+  final List<String> subtasks;
+
+  TaskForm({
+    super.key,
+    required this.selectedCategory,
+    required this.selectedDate,
+    required this.subtasks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +25,6 @@ class _TaskFormState extends State<TaskForm> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Task Input Field
           TextField(
@@ -42,20 +37,19 @@ class _TaskFormState extends State<TaskForm> {
           ),
           const SizedBox(height: 15),
 
-          // Live Preview Section
+          // Card Displaying Selected Category, Date, and Subtasks
           Card(
-            elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 3,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("📌 Selected Category: $selectedCategory", style: const TextStyle(fontSize: 16)),
-                  Text("📅 Due Date: $selectedDate", style: const TextStyle(fontSize: 16)),
-                  Text("✅ Subtasks:", style: const TextStyle(fontSize: 16)),
-                  if (subtasks.isEmpty) const Text("  - No subtasks added", style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  for (String subtask in subtasks) Text("  - $subtask", style: const TextStyle(fontSize: 14)),
+                  _buildInfoRow(Icons.category, "Category", selectedCategory),
+                  const Divider(),
+                  _buildInfoRow(Icons.calendar_today, "Due Date", selectedDate),
+                  const Divider(),
+                  _buildSubtaskList(),
                 ],
               ),
             ),
@@ -63,18 +57,18 @@ class _TaskFormState extends State<TaskForm> {
 
           const SizedBox(height: 15),
 
-          // Buttons Row
+          // Bottom Navigation Bar Style Button Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              CategoryButton(onCategorySelected: (category) {
-                setState(() => selectedCategory = category);
+              _buildBottomButton(Icons.category, "Category", () {
+                // Open category selection
               }),
-              CalendarButton(onDateSelected: (date) {
-                setState(() => selectedDate = date);
+              _buildBottomButton(Icons.calendar_today, "Due Date", () {
+                // Open date picker
               }),
-              SubtaskButton(onSubtaskAdded: (subtask) {
-                setState(() => subtasks.add(subtask));
+              _buildBottomButton(Icons.playlist_add, "Subtask", () {
+                // Open subtask addition
               }),
             ],
           ),
@@ -83,6 +77,65 @@ class _TaskFormState extends State<TaskForm> {
 
           // Submit Button
           SubmitButton(taskController: taskController),
+        ],
+      ),
+    );
+  }
+
+  // Helper Method for Category, Date Rows
+  Widget _buildInfoRow(IconData icon, String title, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blueAccent),
+        const SizedBox(width: 10),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const Spacer(),
+        Text(value, style: const TextStyle(color: Colors.grey)),
+      ],
+    );
+  }
+
+  // Helper Method for Subtask List
+  Widget _buildSubtaskList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: const [
+            Icon(Icons.list, color: Colors.blueAccent),
+            SizedBox(width: 10),
+            Text("Subtasks", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 5),
+        ...subtasks.map((subtask) => Padding(
+              padding: const EdgeInsets.only(left: 30, top: 5),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                  const SizedBox(width: 10),
+                  Text(subtask),
+                ],
+              ),
+            )),
+      ],
+    );
+  }
+
+  // Helper Method for Bottom Bar Buttons
+  Widget _buildBottomButton(IconData icon, String label, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(height: 5),
+          Text(label, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );

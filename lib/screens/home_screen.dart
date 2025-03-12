@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import '../widgets/task_form/task_form.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  void _showTaskForm(BuildContext context) {
-    String selectedCategory = "None";
-    String selectedDate = "No Date"; // Default value if no date is picked
-    List<String> subtasks = [];
+  @override
+  HomeScreenState createState() => HomeScreenState();
+}
 
+class HomeScreenState extends State<HomeScreen> {
+  String selectedCategory = "None";
+  String selectedDate = "No Date"; // Default value if no date is picked
+  List<String> subtasks = [];
+
+  void _showTaskForm(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -24,6 +29,21 @@ class HomeScreen extends StatelessWidget {
             selectedCategory: selectedCategory,
             selectedDate: selectedDate,
             subtasks: subtasks,
+            onCategorySelected: (category) {
+              setState(() {
+                selectedCategory = category;
+              });
+            },
+            onDateSelected: (date) {
+              setState(() {
+                selectedDate = date;
+              });
+            },
+            onSubtasksUpdated: (updatedSubtasks) {
+              setState(() {
+                subtasks = updatedSubtasks;
+              });
+            },
           ),
         );
       },

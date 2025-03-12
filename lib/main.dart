@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
-import 'widgets/task_form/subtask_button/subtask_button_logic.dart'; // Ensure this path is correct
+import 'widgets/task_form/subtask_button/subtask_button_logic.dart'; // Importing SubtaskManager
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SubtaskManager()), // Ensure this class is defined correctly
+        ChangeNotifierProvider(create: (_) => SubtaskManager()), // Correctly providing SubtaskManager
       ],
       child: const MyApp(),
     ),

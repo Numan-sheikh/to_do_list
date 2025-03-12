@@ -1,43 +1,27 @@
 import 'package:flutter/material.dart';
 
 class CategoryButtonLogic {
-  static void showCategoryDialog(BuildContext context) {
-    showDialog(
+  static Future<String?> selectCategory(BuildContext context) async {
+    List<String> categories = ["Work", "Personal", "Shopping", "Health"];
+
+    return await showDialog<String>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
           title: const Text("Select Category"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text("Work"),
+            children: categories.map((category) {
+              return ListTile(
+                title: Text(category),
                 onTap: () {
-                  Navigator.pop(context, "Work");
+                  Navigator.pop(context, category); // Return selected category
                 },
-              ),
-              ListTile(
-                title: const Text("Personal"),
-                onTap: () {
-                  Navigator.pop(context, "Personal");
-                },
-              ),
-              ListTile(
-                title: const Text("Shopping"),
-                onTap: () {
-                  Navigator.pop(context, "Shopping");
-                },
-              ),
-            ],
+              );
+            }).toList(),
           ),
         );
       },
-    ).then((selectedCategory) {
-      if (selectedCategory != null && context.mounted) { // ✅ Check if context is valid
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Selected Category: $selectedCategory")),
-        );
-      }
-    });
+    );
   }
 }

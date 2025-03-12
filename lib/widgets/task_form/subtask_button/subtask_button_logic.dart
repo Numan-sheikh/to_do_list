@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
-class SubtaskManager extends ChangeNotifier {  // Manages subtasks
-  final List<String> _subTasks = [];
+class SubtaskManager extends ChangeNotifier {
+  final List<String> _subtasks = [];
 
-  List<String> get subTasks => _subTasks;
+  List<String> get subtasks => _subtasks;
 
   void addSubtask(String subtask) {
-    _subTasks.add(subtask);
+    _subtasks.add(subtask);
     notifyListeners();
   }
 
-  void removeSubtask(String subtask) {
-    _subTasks.remove(subtask);
+  void removeSubtask(int index) {
+    _subtasks.removeAt(index);
+    notifyListeners();
+  }
+
+  void clearSubtasks() {
+    _subtasks.clear();
     notifyListeners();
   }
 }

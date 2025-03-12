@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'submit_button/submit_button.dart';
 
 class TaskForm extends StatelessWidget {
@@ -7,12 +6,18 @@ class TaskForm extends StatelessWidget {
   final String selectedCategory;
   final String selectedDate;
   final List<String> subtasks;
+  final Function(String) onCategorySelected;
+  final Function(String) onDateSelected;
+  final Function(List<String>) onSubtasksUpdated;
 
   TaskForm({
     super.key,
     required this.selectedCategory,
     required this.selectedDate,
     required this.subtasks,
+    required this.onCategorySelected,
+    required this.onDateSelected,
+    required this.onSubtasksUpdated,
   });
 
   @override
@@ -62,13 +67,13 @@ class TaskForm extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildBottomButton(Icons.category, "Category", () {
-                // Open category selection
+                _selectCategory(context);
               }),
               _buildBottomButton(Icons.calendar_today, "Due Date", () {
-                // Open date picker
+                _selectDate(context);
               }),
               _buildBottomButton(Icons.playlist_add, "Subtask", () {
-                // Open subtask addition
+                _addSubtask(context);
               }),
             ],
           ),
@@ -139,5 +144,49 @@ class TaskForm extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _selectCategory(BuildContext context) async {
+    // Example: Show a dialog to pick a category
+    String? newCategory = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Category"),
+          content: const Text("Example categories: Work, Personal, Shopping"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, "Work"),
+              child: const Text("Work"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, "Personal"),
+              child: const Text("Personal"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newCategory != null) {
+      onCategorySelected(newCategory);
+    }
+  }
+
+  void _selectDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      onDateSelected(pickedDate.toLocal().toString().split(' ')[0]);
+    }
+  }
+
+  void _addSubtask(BuildContext context) {
+    // Implement subtask logic here
   }
 }

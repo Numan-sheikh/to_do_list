@@ -1,24 +1,49 @@
 import 'package:flutter/material.dart';
+import '../../models/task_model.dart';
 import 'submit_button/submit_button.dart';
+import 'category_button/category_button_logic.dart';
+import 'calendar_button/calendar_button_logic.dart';
 
-class TaskForm extends StatelessWidget {
-  final TextEditingController taskController = TextEditingController();
-  final String selectedCategory;
-  final String selectedDate;
-  final List<String> subtasks;
-  final Function(String) onCategorySelected;
-  final Function(String) onDateSelected;
-  final Function(List<String>) onSubtasksUpdated;
+class TaskForm extends StatefulWidget {
+  final Function(String, String, String, List<String>) onTaskSubmit;
+  final Task? initialTask;
 
-  TaskForm({
+  const TaskForm({
     super.key,
-    required this.selectedCategory,
-    required this.selectedDate,
-    required this.subtasks,
-    required this.onCategorySelected,
-    required this.onDateSelected,
-    required this.onSubtasksUpdated,
+    required this.onTaskSubmit,
+    this.initialTask,
   });
+
+  @override
+  TaskFormState createState() => TaskFormState();
+}
+
+class TaskFormState extends State<TaskForm> {
+  final TextEditingController taskController = TextEditingController();
+  final TextEditingController subtaskController = TextEditingController();
+
+  String selectedCategory = "None";
+  String selectedDate = "No Date";
+  List<String> subtasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTask != null) {
+      final task = widget.initialTask!;
+      taskController.text = task.title;
+      selectedCategory = task.category;
+      selectedDate = task.dueDate;
+      subtasks = List<String>.from(task.subtasks);
+    }
+  }
+
+  @override
+  void dispose() {
+    taskController.dispose();
+    subtaskController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +61,17 @@ class TaskForm extends StatelessWidget {
             controller: taskController,
             decoration: InputDecoration(
               labelText: "Task Name",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               prefixIcon: const Icon(Icons.task),
             ),
           ),
           const SizedBox(height: 15),
 
-          // Card Displaying Selected Category, Date, and Subtasks
+          // Card with Category, Date, Subtasks
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             elevation: 3,
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -62,32 +89,35 @@ class TaskForm extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // Bottom Navigation Bar Style Button Row
+          // Bottom Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildBottomButton(Icons.category, "Category", () {
-                _selectCategory(context);
-              }),
-              _buildBottomButton(Icons.calendar_today, "Due Date", () {
-                _selectDate(context);
-              }),
-              _buildBottomButton(Icons.playlist_add, "Subtask", () {
-                _addSubtask(context);
-              }),
+              _buildBottomButton(Icons.category, "Category", _selectCategory),
+              _buildBottomButton(Icons.calendar_today, "Due Date", _selectDate),
+              _buildBottomButton(Icons.playlist_add, "Subtask", _addSubtask),
             ],
           ),
 
           const SizedBox(height: 20),
 
           // Submit Button
-          SubmitButton(taskController: taskController),
+          SubmitButton(
+            taskController: taskController,
+            onSubmit: () {
+              widget.onTaskSubmit(
+                taskController.text,
+                selectedCategory,
+                selectedDate,
+                subtasks,
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  // Helper Method for Category, Date Rows
   Widget _buildInfoRow(IconData icon, String title, String value) {
     return Row(
       children: [
@@ -100,7 +130,6 @@ class TaskForm extends StatelessWidget {
     );
   }
 
-  // Helper Method for Subtask List
   Widget _buildSubtaskList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,8 +156,8 @@ class TaskForm extends StatelessWidget {
     );
   }
 
-  // Helper Method for Bottom Bar Buttons
-  Widget _buildBottomButton(IconData icon, String label, VoidCallback onPressed) {
+  Widget _buildBottomButton(
+      IconData icon, String label, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -146,47 +175,67 @@ class TaskForm extends StatelessWidget {
     );
   }
 
-  void _selectCategory(BuildContext context) async {
-    // Example: Show a dialog to pick a category
-    String? newCategory = await showDialog<String>(
+  // ✅ Category Selection Logic
+  void _selectCategory() async {
+    String? newCategory = await CategoryButtonLogic.selectCategory(context);
+    if (!mounted) return;
+    if (newCategory != null) {
+      setState(() {
+        selectedCategory = newCategory;
+      });
+    }
+  }
+
+  // ✅ Date & Time Selection
+  void _selectDate() async {
+    Map<String, String>? dateTime =
+        await CalendarButtonLogic.selectDueDateTime(context);
+    if (!mounted) return;
+    setState(() {
+      selectedDate = "${dateTime["date"]} at ${dateTime["time"]}";
+    });
+  }
+
+  // ✅ Subtask Modal
+  void _addSubtask() {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Select Category"),
-          content: const Text("Example categories: Work, Personal, Shopping"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, "Work"),
-              child: const Text("Work"),
+        return Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: subtaskController,
+                  decoration: const InputDecoration(
+                    labelText: "Enter Subtask",
+                    border: OutlineInputBorder(),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    if (subtaskController.text.isNotEmpty) {
+                      setState(() {
+                        subtasks.add(subtaskController.text);
+                        subtaskController.clear();
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Add Subtask"),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, "Personal"),
-              child: const Text("Personal"),
-            ),
-          ],
+          ),
         );
       },
     );
-
-    if (newCategory != null) {
-      onCategorySelected(newCategory);
-    }
-  }
-
-  void _selectDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (pickedDate != null) {
-      onDateSelected(pickedDate.toLocal().toString().split(' ')[0]);
-    }
-  }
-
-  void _addSubtask(BuildContext context) {
-    // Implement subtask logic here
   }
 }

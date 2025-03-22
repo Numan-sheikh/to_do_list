@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 
 class SubmitButton extends StatelessWidget {
   final TextEditingController taskController;
+  final VoidCallback onSubmit;
 
-  const SubmitButton({super.key, required this.taskController});
+  const SubmitButton({
+    super.key,
+    required this.taskController,
+    required this.onSubmit,
+  });
 
   void _handleSubmit(BuildContext context) {
     if (taskController.text.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Task Added: ${taskController.text}")),
-      );
-      Navigator.pop(context); // Close bottom sheet after submission
+      onSubmit(); // Just call the callback
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter a task name!")),

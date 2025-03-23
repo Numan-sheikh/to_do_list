@@ -5,7 +5,7 @@ import 'category_button/category_button_logic.dart';
 import 'calendar_button/calendar_button_logic.dart';
 
 class TaskForm extends StatefulWidget {
-  final Function(String, String, String, List<String>) onTaskSubmit;
+  final Function(String, String, DateTime?, List<Subtask>, String) onTaskSubmit;
   final Task? initialTask;
 
   const TaskForm({
@@ -23,8 +23,10 @@ class TaskFormState extends State<TaskForm> {
   final TextEditingController subtaskController = TextEditingController();
 
   String selectedCategory = "None";
-  String selectedDate = "No Date";
-  List<String> subtasks = [];
+  DateTime? selectedDate;
+  String selectedPriority = "Medium";
+
+  List<Subtask> subtasks = [];
 
   @override
   void initState() {
@@ -34,7 +36,8 @@ class TaskFormState extends State<TaskForm> {
       taskController.text = task.title;
       selectedCategory = task.category;
       selectedDate = task.dueDate;
-      subtasks = List<String>.from(task.subtasks);
+      selectedPriority = task.priority;
+      subtasks = List<Subtask>.from(task.subtasks);
     }
   }
 
@@ -47,73 +50,105 @@ class TaskFormState extends State<TaskForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Task Input Field
-          TextField(
-            controller: taskController,
-            decoration: InputDecoration(
-              labelText: "Task Name",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              prefixIcon: const Icon(Icons.task),
-            ),
-          ),
-          const SizedBox(height: 15),
+    final viewInsets = MediaQuery.of(context).viewInsets;
 
-          // Card with Category, Date, Subtasks
-          Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              TextField(
+                controller: taskController,
+                decoration: InputDecoration(
+                  labelText: "Task Name",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  prefixIcon: const Icon(Icons.task),
+                ),
+              ),
+              const SizedBox(height: 15),
+
+              // Card with Info
+              Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      _buildInfoRow(
+                          Icons.category, "Category", selectedCategory),
+                      const Divider(),
+                      _buildInfoRow(
+                        Icons.calendar_today,
+                        "Due Date",
+                        selectedDate != null
+                            ? "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year} at ${selectedDate!.hour.toString().padLeft(2, '0')}:${selectedDate!.minute.toString().padLeft(2, '0')}"
+                            : "No Date",
+                      ),
+                      const Divider(),
+                      _buildInfoRow(Icons.flag, "Priority", selectedPriority),
+                      const Divider(),
+                      _buildSubtaskList(),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              // Bottom buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildInfoRow(Icons.category, "Category", selectedCategory),
-                  const Divider(),
-                  _buildInfoRow(Icons.calendar_today, "Due Date", selectedDate),
-                  const Divider(),
-                  _buildSubtaskList(),
+                  _buildBottomButton(
+                      Icons.category, "Category", _selectCategory),
+                  _buildBottomButton(
+                      Icons.calendar_today, "Due Date", _selectDate),
+                  _buildBottomButton(
+                      Icons.priority_high, "Priority", _selectPriority),
+                  _buildBottomButton(
+                      Icons.playlist_add, "Subtask", _addSubtask),
                 ],
               ),
-            ),
-          ),
 
-          const SizedBox(height: 15),
+              const SizedBox(height: 20),
 
-          // Bottom Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBottomButton(Icons.category, "Category", _selectCategory),
-              _buildBottomButton(Icons.calendar_today, "Due Date", _selectDate),
-              _buildBottomButton(Icons.playlist_add, "Subtask", _addSubtask),
+              // Submit Button
+              SubmitButton(
+                taskController: taskController,
+                onSubmit: () {
+                  widget.onTaskSubmit(
+                    taskController.text,
+                    selectedCategory,
+                    selectedDate,
+                    subtasks,
+                    selectedPriority,
+                  );
+                },
+              ),
             ],
           ),
-
-          const SizedBox(height: 20),
-
-          // Submit Button
-          SubmitButton(
-            taskController: taskController,
-            onSubmit: () {
-              widget.onTaskSubmit(
-                taskController.text,
-                selectedCategory,
-                selectedDate,
-                subtasks,
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -142,16 +177,36 @@ class TaskFormState extends State<TaskForm> {
           ],
         ),
         const SizedBox(height: 5),
-        ...subtasks.map((subtask) => Padding(
-              padding: const EdgeInsets.only(left: 30, top: 5),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                  const SizedBox(width: 10),
-                  Text(subtask),
-                ],
-              ),
-            )),
+        ...subtasks.map(
+          (sub) => Padding(
+            padding: const EdgeInsets.only(left: 20, top: 5),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: sub.isCompleted,
+                  onChanged: (val) {
+                    setState(() {
+                      final index = subtasks.indexOf(sub);
+                      if (index != -1) {
+                        subtasks[index] =
+                            sub.copyWith(isCompleted: val ?? false);
+                      }
+                    });
+                  },
+                ),
+                Expanded(child: Text(sub.title)),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18),
+                  onPressed: () {
+                    setState(() {
+                      subtasks.remove(sub);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -175,7 +230,6 @@ class TaskFormState extends State<TaskForm> {
     );
   }
 
-  // ✅ Category Selection Logic
   void _selectCategory() async {
     String? newCategory = await CategoryButtonLogic.selectCategory(context);
     if (!mounted) return;
@@ -186,17 +240,42 @@ class TaskFormState extends State<TaskForm> {
     }
   }
 
-  // ✅ Date & Time Selection
   void _selectDate() async {
-    Map<String, String>? dateTime =
-        await CalendarButtonLogic.selectDueDateTime(context);
+    DateTime? pickedDateTime =
+        (await CalendarButtonLogic.selectDueDateTime(context)) as DateTime?;
     if (!mounted) return;
-    setState(() {
-      selectedDate = "${dateTime["date"]} at ${dateTime["time"]}";
-    });
+    if (pickedDateTime != null) {
+      setState(() {
+        selectedDate = pickedDateTime;
+      });
+    }
   }
 
-  // ✅ Subtask Modal
+  void _selectPriority() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: ["High", "Medium", "Low"].map((priority) {
+            return ListTile(
+              title: Text(priority),
+              leading: Radio<String>(
+                value: priority,
+                groupValue: selectedPriority,
+                onChanged: (value) {
+                  setState(() {
+                    selectedPriority = value!;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
   void _addSubtask() {
     showModalBottomSheet(
       context: context,
@@ -223,7 +302,10 @@ class TaskFormState extends State<TaskForm> {
                   onPressed: () {
                     if (subtaskController.text.isNotEmpty) {
                       setState(() {
-                        subtasks.add(subtaskController.text);
+                        subtasks.add(Subtask(
+                          title: subtaskController.text,
+                          isCompleted: false,
+                        ));
                         subtaskController.clear();
                       });
                       Navigator.pop(context);
